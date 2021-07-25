@@ -51,15 +51,18 @@ arg = sys.argv[1]
 overhead()
 print("[+] Checking with gtfobins")
 response = requests.get('https://gtfobins.github.io/#+suid')
+resp = requests.get('https://gtfobins.github.io/#+reverse%20shell')
 
-if response.status_code == 200:
+if response.status_code == 200 and resp.status_code == 200:
 	print("[+] Parsing gtfobins results")
-elif response.status_code == 404:
+elif response.status_code == 404 or resp.status_code == 404:
 	sys.exit("[-] Unable to contact gtfobins")
 
 soup = BeautifulSoup(response.text, 'html.parser')
+rsoup = BeautifulSoup(resp.text, 'html.parser')
 
 gtfolist = {}
+revlist = {}
 
 #find all of the html href tags that contain #suid
 #ex: /gtfobins/cupsfilter/#suid
@@ -71,6 +74,14 @@ for tag in soup.find_all('a', href=True):
 		suid = suid[10:]
 		entry = suid.split("/",1)
 		gtfolist[str(entry[0])] = "suid"
+		#print(entry[0])
+
+for tag in rsoup.find_all('a', href=True):
+	if tag['href'].endswith('#reverse-shell') and tag['href'][0] != '#':
+		suid = tag['href']
+		suid = suid[10:]
+		entry = suid.split("/",1)
+		revlist[str(entry[0])] = "suid"
 		#print(entry[0])
 
 #print(gtfolist)
@@ -89,9 +100,17 @@ for line in lines:
 		print(IWhite + binary)
 
 print()
-print(IGreen + "These binaries are installed on linux by default")
+print(IGreen + "These binaries may be used to attain a reverse shell")
+for line in lines:
+	binary = os.path.basename(line)
+	if binary in revlist:
+		print(IWhite + binary)
+
+print()
+print(IYellow + "These binaries are installed on linux by default")
 for line in lines:
 	binary = os.path.basename(line)
 	if binary in defaults:
 		print(IWhite + binary)
+
 
